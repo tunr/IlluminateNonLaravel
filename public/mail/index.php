@@ -16,6 +16,10 @@
 
 require_once '../../vendor/autoload.php';
 
+use Swift_Mailer as SwiftMailer;
+use Swift_SmtpTransport as SmtpTransport;
+use Swift_SendmailTransport as SendmailTransport;
+use Swift_MailTransport as MailTransport;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\View\Engines\PhpEngine;
 use Illuminate\View\Engines\EngineResolver;
@@ -39,16 +43,16 @@ $app->get('/', function ()
     $password = getenv('SMTP_PASSWORD');
 
     // chose a transport (PHP Mail, Sendmail, SMTP)
-    // $transport = Swift_MailTransport::newInstance();
-    // $transport = Swift_SendmailTransport::newInstance('/usr/sbin/sendmail -bs');
-    $transport = Swift_SmtpTransport::newInstance($host, $port);
+    // $transport = MailTransport::newInstance();
+    // $transport = SendmailTransport::newInstance('/usr/sbin/sendmail -bs');
+    $transport = SmtpTransport::newInstance($host, $port);
 
     // SMTP specific configuration, remove these if you're not using SMTP
     $transport->setUsername($username);
     $transport->setPassword($password);
     $transport->setEncryption(true);
 
-    $swift    = new Swift_Mailer($transport);
+    $swift    = new SwiftMailer($transport);
     $finder   = new FileViewFinder(new Filesystem, [__DIR__ . '/../../app/views']);
     $resolver = new EngineResolver;
 
@@ -73,13 +77,13 @@ $app->get('/', function ()
     $mailer->pretend(false);
 
     $data = [
-        'greeting' => 'This was sent using the SMTP transport.',
+        'greeting' => 'You have arrived, girl.',
     ];
 
     $mailer->send('email.welcome', $data, function($message)
     {
-        $message->from('nathan@soulsender.com', 'Soul Sender');
-        $message->to('capellion@gmail.com', 'Nathan Stokes');
+        $message->from(getenv('MAIL_FROM_ADDRESS'), 'Code Guy');
+        $message->to(getenv('MAIL_TO_ADDRESS'), 'Keira Knightley');
         $message->subject('Yo!');
     });
 
