@@ -20,6 +20,9 @@ use Swift_Mailer as SwiftMailer;
 use Swift_SmtpTransport as SmtpTransport;
 use Swift_SendmailTransport as SendmailTransport;
 use Swift_MailTransport as MailTransport;
+use Illuminate\Mail\Transport\MailgunTransport;
+use Illuminate\Mail\Transport\MandrillTransport;
+use Illuminate\Mail\Transport\LogTransport;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\View\Engines\PhpEngine;
 use Illuminate\View\Engines\EngineResolver;
@@ -36,20 +39,22 @@ $app->add(new \Zeuxisoo\Whoops\Provider\Slim\WhoopsMiddleware);
 
 $app->get('/', function ()
 {
-    // SMTP configuration is pulled from web server environnent variables
-    $host     = getenv('SMTP_HOST');
-    $port     = getenv('SMTP_PORT');
-    $username = getenv('SMTP_USERNAME');
-    $password = getenv('SMTP_PASSWORD');
+    $logger = new Writer(new Logger('local'));
 
-    // chose a transport (PHP Mail, Sendmail, SMTP)
+    // note: make sure log file is writable
+    $logger->useFiles('../../logs/laravel.log');
+
+    // chose a transport (SMTP, PHP Mail, Sendmail, Mailgun, Maindrill, Log)
+    $transport = SmtpTransport::newInstance(getenv('SMTP_HOST'), getenv('SMTP_PORT'));
     // $transport = MailTransport::newInstance();
     // $transport = SendmailTransport::newInstance('/usr/sbin/sendmail -bs');
-    $transport = SmtpTransport::newInstance($host, $port);
+    // $transport = new MailgunTransport(getenv('MAILGUN_SECRET'), getenv('MAILGUN_DOMAIN'));
+    // $transport = new MandrillTransport(getenv('MANDRILL_SECRET'));
+    // $transport = new LogTransport($logger->getMonolog());
 
     // SMTP specific configuration, remove these if you're not using SMTP
-    $transport->setUsername($username);
-    $transport->setPassword($password);
+    $transport->setUsername(getenv('SMTP_USERNAME'));
+    $transport->setPassword(getenv('SMTP_PASSWORD'));
     $transport->setEncryption(true);
 
     $swift    = new SwiftMailer($transport);
@@ -64,18 +69,15 @@ $app->get('/', function ()
 
     $view   = new Factory($resolver, $finder, new Dispatcher());
     $mailer = new Mailer($view, $swift);
-    $logger = new Writer(new Logger('local'));
-
-    // note: make sure log file is writable
-    $logger->useFiles('../../logs/laravel.log');
 
     $mailer->setLogger($logger);
-    // $mailer->setQueue($app['queue']); // queue functionality is not available if the queue module is not set
-    // $mailer->setContainer($app);      // the message builder must be a callback if the container is not set
+    // $mailer->setQueue($app['queue']); // note: queue functionality is not available if the queue module is not set
+    // $mailer->setContainer($app);      // note: the message builder must be a callback if the container is not set
 
     // pretend method can be used for testing
     $mailer->pretend(false);
 
+    // prepare email view data
     $data = [
         'greeting' => 'You have arrived, girl.',
     ];
