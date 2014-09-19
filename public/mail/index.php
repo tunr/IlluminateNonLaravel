@@ -11,6 +11,11 @@
  *           illuminate/view
  *           swiftmailer/swiftmailer
  *
+ * The Mailgun and Mandrill drivers require guzzle
+ * to be added to your composer.json file:
+ *
+ * "guzzlehttp/guzzle": "~4.0"
+ * 
  * @source https://github.com/illuminate/mail
  */
 
