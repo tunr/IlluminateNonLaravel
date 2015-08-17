@@ -21,13 +21,12 @@ $app = new \Slim\Slim();
 $app->add(new \Zeuxisoo\Whoops\Provider\Slim\WhoopsMiddleware);
 
 $app->get('/', function () {
-
 	$capsule = new Capsule;
 
 	$capsule->addConnection([
 		'driver'    => 'mysql',
 		'host'      => 'localhost',
-		'database'  => 'illuminateslim',
+		'database'  => 'illuminate_non_laravel',
 		'username'  => 'root',
 		'password'  => '',
 		'charset'   => 'utf8',
